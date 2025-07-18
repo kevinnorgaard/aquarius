@@ -7,6 +7,14 @@ export interface AudioFile {
   url: string;
 }
 
+export interface GLTFFile {
+  file: File;
+  name: string;
+  size: number;
+  format: string;
+  url: string;
+}
+
 export interface MicrophoneConfig {
   sampleRate: number;
   channelCount: number;
@@ -25,11 +33,20 @@ export interface AudioInputState {
   source: AudioBufferSourceNode | MediaStreamAudioSourceNode | MediaElementAudioSourceNode | null;
 }
 
+export interface GLTFState {
+  gltfFile: GLTFFile | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
 export interface AudioVisualizationData {
   frequencyData: Uint8Array;
   timeData: Uint8Array;
   volume: number;
   timestamp: number;
+  // Add frequency analysis for low/high ranges
+  lowFrequencyAverage: number;
+  highFrequencyAverage: number;
 }
 
 export type AudioInputType = 'file' | 'microphone';

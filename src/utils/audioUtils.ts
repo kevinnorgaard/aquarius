@@ -193,7 +193,7 @@ export class AudioUtils {
   /**
    * Analyzes audio and returns visualization data
    */
-  static analyzeAudio(analyser: AnalyserNode): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number } {
+  static analyzeAudio(analyser: AnalyserNode): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number; lowFrequencyAverage: number; highFrequencyAverage: number } {
     const frequencyData = new Uint8Array(analyser.frequencyBinCount);
     const timeData = new Uint8Array(analyser.fftSize);
     
@@ -208,6 +208,22 @@ export class AudioUtils {
     }
     const volume = Math.sqrt(sum / timeData.length);
     
-    return { frequencyData, timeData, volume };
+    // Calculate low frequency average (0 - 33% of frequency range)
+    const lowFreqEnd = Math.floor(frequencyData.length / 3);
+    let lowFreqSum = 0;
+    for (let i = 0; i < lowFreqEnd; i++) {
+      lowFreqSum += frequencyData[i];
+    }
+    const lowFrequencyAverage = lowFreqSum / lowFreqEnd / 255; // Normalize to 0-1
+    
+    // Calculate high frequency average (67% - 100% of frequency range)
+    const highFreqStart = Math.floor((frequencyData.length * 2) / 3);
+    let highFreqSum = 0;
+    for (let i = highFreqStart; i < frequencyData.length; i++) {
+      highFreqSum += frequencyData[i];
+    }
+    const highFrequencyAverage = highFreqSum / (frequencyData.length - highFreqStart) / 255; // Normalize to 0-1
+    
+    return { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage };
   }
 }
