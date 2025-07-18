@@ -157,7 +157,7 @@ export default function Home() {
                 gltfFile={gltfState.gltfFile}
                 audioData={audioData}
                 width={800}
-                height={400}
+                height={800}
               />
             </section>
           )}
