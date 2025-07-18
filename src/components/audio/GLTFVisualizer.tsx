@@ -2,7 +2,7 @@
 
 import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { OrbitControls, Environment } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AudioVisualizationData, GLTFFile } from '@/types/audio';
 import * as THREE from 'three';
@@ -148,6 +148,7 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} intensity={1} />
             <pointLight position={[-10, -10, -10]} intensity={0.5} />
+            <directionalLight position={[5, 5, 5]} intensity={0.3} />
             
             <AnimatedModel gltfFile={gltfFile} audioData={audioData} />
             
@@ -158,8 +159,6 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
               autoRotate={!audioData} // Auto-rotate when no audio
               autoRotateSpeed={0.5}
             />
-            
-            <Environment preset="studio" />
           </Canvas>
           
           {audioData && (
