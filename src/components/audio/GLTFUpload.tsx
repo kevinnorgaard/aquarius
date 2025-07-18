@@ -75,7 +75,7 @@ export default function GLTFUpload({ onFileSelect, onError, isProcessing = false
       >
         <input
           type="file"
-          accept=".gltf,.glb,model/gltf+json,model/gltf-binary"
+          accept=".gltf,.glb,model/gltf+json,model/gltf-binary,application/octet-stream,application/json"
           onChange={handleFileInputChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isProcessing}
