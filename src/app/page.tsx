@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { AudioVisualizationData, AudioInputState } from '@/types/audio';
 import AudioInputSelector from '@/components/audio/AudioInputSelector';
 import AudioVisualizer from '@/components/audio/AudioVisualizer';
@@ -9,13 +9,13 @@ export default function Home() {
   const [audioData, setAudioData] = useState<AudioVisualizationData | null>(null);
   const [audioState, setAudioState] = useState<AudioInputState | null>(null);
 
-  const handleAudioData = (data: AudioVisualizationData) => {
+  const handleAudioData = useCallback((data: AudioVisualizationData) => {
     setAudioData(data);
-  };
+  }, []);
 
-  const handleStateChange = (state: AudioInputState) => {
+  const handleStateChange = useCallback((state: AudioInputState) => {
     setAudioState(state);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
