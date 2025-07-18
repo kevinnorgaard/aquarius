@@ -40,7 +40,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       source: sourceRef.current
     };
     onStateChange?.(audioState);
-  }, [inputType, isRecording, isProcessing, error, audioFile, onStateChange]);
+  }, [inputType, isRecording, isProcessing, error, audioFile]); // Removed onStateChange from dependencies
 
   const cleanup = useCallback(() => {
     // Stop animation frame
@@ -88,12 +88,14 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
   const updateVisualizationData = useCallback(() => {
     if (analyserRef.current && onAudioData) {
-      const { frequencyData, timeData, volume } = AudioUtils.analyzeAudio(analyserRef.current);
+      const { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage } = AudioUtils.analyzeAudio(analyserRef.current);
       
       onAudioData({
         frequencyData,
         timeData,
         volume,
+        lowFrequencyAverage,
+        highFrequencyAverage,
         timestamp: Date.now()
       });
       
