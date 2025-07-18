@@ -22,7 +22,7 @@ export interface AudioInputState {
   audioFile: AudioFile | null;
   audioContext: AudioContext | null;
   analyser: AnalyserNode | null;
-  source: AudioBufferSourceNode | MediaStreamAudioSourceNode | null;
+  source: AudioBufferSourceNode | MediaStreamAudioSourceNode | MediaElementAudioSourceNode | null;
 }
 
 export interface AudioVisualizationData {

@@ -29,11 +29,6 @@ export default function MicrophoneInput({
     AudioUtils.isMicrophoneAvailable().then(setIsAvailable);
   }, []);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return stopRecording;
-  }, [stopRecording]);
-
   const updateVolumeLevel = useCallback(() => {
     if (analyserRef.current) {
       const { volume: currentVolume } = AudioUtils.analyzeAudio(analyserRef.current);
@@ -41,6 +36,35 @@ export default function MicrophoneInput({
       animationFrameRef.current = requestAnimationFrame(updateVolumeLevel);
     }
   }, []);
+
+  const stopRecording = useCallback(() => {
+    // Stop volume monitoring
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    // Stop all tracks
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    // Close audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    analyserRef.current = null;
+    setVolume(0);
+    onStreamStop();
+  }, [onStreamStop]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return stopRecording;
+  }, [stopRecording]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -72,30 +96,6 @@ export default function MicrophoneInput({
       setIsRequestingAccess(false);
     }
   }, [onStreamStart, onError, updateVolumeLevel]);
-
-  const stopRecording = useCallback(() => {
-    // Stop volume monitoring
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    // Stop all tracks
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    // Close audio context
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-
-    analyserRef.current = null;
-    setVolume(0);
-    onStreamStop();
-  }, [onStreamStop]);
 
   const handleToggleRecording = useCallback(() => {
     if (isRecording) {
