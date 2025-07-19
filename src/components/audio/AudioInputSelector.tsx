@@ -240,14 +240,56 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       // Debug log
       console.log('AudioInputSelector - handleFileSelect - selectedFile:', selectedFile);
       
+      // Set audioFile state first
       setAudioFile(selectedFile);
+      
+      // Then set input type
       setInputType(inputType === 'playlist' ? 'playlist' : 'file');
       setIsProcessing(false);
 
       // Auto-play and start visualization
       await audio.play();
       setIsPlaying(true);
-      updateVisualizationData();
+      
+      // Force update audioFile in updateVisualizationData
+      const updatedVisualizationData = () => {
+        if (analyserRef.current && onAudioData) {
+          console.log('AudioInputSelector - updatedVisualizationData - selectedFile:', selectedFile);
+          
+          const { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity } = AudioUtils.analyzeAudio(
+            analyserRef.current, 
+            true, 
+            selectedFile.specifiedBpm
+          );
+          
+          // Ensure specifiedBpm is passed correctly
+          const visualizationData: AudioVisualizationData = {
+            frequencyData,
+            timeData,
+            volume,
+            lowFrequencyAverage,
+            highFrequencyAverage,
+            bpm: bpm,
+            beatIntensity,
+            timestamp: Date.now(),
+            isPlaying: true
+          };
+          
+          // Only add specifiedBpm if it's defined
+          if (selectedFile.specifiedBpm !== undefined) {
+            visualizationData.specifiedBpm = selectedFile.specifiedBpm;
+            console.log('Setting specifiedBpm in visualization data:', selectedFile.specifiedBpm);
+          }
+          
+          onAudioData(visualizationData);
+          
+          // Start the regular update loop
+          animationFrameRef.current = requestAnimationFrame(updateVisualizationData);
+        }
+      };
+      
+      // Call the updated visualization data function
+      updatedVisualizationData();
     } catch (error) {
       handleError(error instanceof Error ? error.message : 'Failed to process audio file');
     }
