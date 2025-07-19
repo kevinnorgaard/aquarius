@@ -251,8 +251,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
               onClick={() => handleInputTypeSelect('file')}
               className="p-8 border-2 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
               style={{ 
-                borderColor: 'var(--border)',
-                ':hover': { borderColor: 'var(--primary-light)', backgroundColor: 'rgba(143, 165, 92, 0.1)' }
+                borderColor: 'var(--border)'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = 'var(--primary-light)';
@@ -389,8 +388,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             }}
             className="px-4 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded"
             style={{ 
-              color: '#9ca3af',
-              ':hover': { color: 'var(--foreground)' }
+              color: '#9ca3af'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'var(--foreground)';
