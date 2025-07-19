@@ -82,3 +82,17 @@ export interface BPMDetectionData {
   lastBeatTime: number;
   beatIntensity: number;
 }
+
+export interface OnsetDetectionData {
+  onsetTimes: number[];
+  spectralFlux: number[];
+  adaptiveThreshold: number[];
+  onsetStrength: number;
+}
+
+export interface IOIHistogramData {
+  intervals: number[];
+  histogram: Map<number, number>;
+  peakIntervals: number[];
+  confidence: number;
+}
