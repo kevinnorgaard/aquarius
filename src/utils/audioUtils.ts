@@ -216,7 +216,7 @@ export class AudioUtils {
   /**
    * Analyzes audio and returns visualization data
    */
-  static analyzeAudio(analyser: AnalyserNode): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number; lowFrequencyAverage: number; highFrequencyAverage: number; bpm: number; beatIntensity: number } {
+  static analyzeAudio(analyser: AnalyserNode, isPlaying: boolean = true, specifiedBpm?: number): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number; lowFrequencyAverage: number; highFrequencyAverage: number; bpm: number; beatIntensity: number; isPlaying: boolean; specifiedBpm?: number } {
     const frequencyData = new Uint8Array(analyser.frequencyBinCount);
     const timeData = new Uint8Array(analyser.fftSize);
     
@@ -248,7 +248,19 @@ export class AudioUtils {
     const highFrequencyAverage = highFreqSum / (frequencyData.length - highFreqStart) / 255; // Normalize to 0-1
     
     // Detect BPM and beat intensity
-    const bpmData = this.detectBPM(frequencyData, lowFrequencyAverage);
+    let bpmData: { bpm: number; beatIntensity: number };
+    
+    if (specifiedBpm && specifiedBpm > 0) {
+      // Use specified BPM from playlist, but still calculate beat intensity from audio
+      const detectedBpmData = this.detectBPM(frequencyData, lowFrequencyAverage);
+      bpmData = {
+        bpm: specifiedBpm,
+        beatIntensity: detectedBpmData.beatIntensity
+      };
+    } else {
+      // Use detected BPM
+      bpmData = this.detectBPM(frequencyData, lowFrequencyAverage);
+    }
     
     return { 
       frequencyData, 
@@ -257,7 +269,9 @@ export class AudioUtils {
       lowFrequencyAverage, 
       highFrequencyAverage,
       bpm: bpmData.bpm,
-      beatIntensity: bpmData.beatIntensity
+      beatIntensity: bpmData.beatIntensity,
+      isPlaying,
+      specifiedBpm
     };
   }
 

@@ -42,7 +42,10 @@ function AnimatedModel({ gltfFile, audioData }: AnimatedModelProps) {
   useFrame(() => {
     if (!audioData || !groupRef.current) return;
 
-    const { lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity } = audioData;
+    const { lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity, isPlaying } = audioData;
+    
+    // Stop all animations when audio is not playing
+    if (!isPlaying) return;
 
     // Animate low frequency meshes (bass response) - removed rotation
     lowFreqMeshes.forEach((mesh, index) => {
@@ -172,10 +175,11 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
           
           {audioData && (
             <div className="absolute top-2 right-2 text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">
-              <div>BPM: {Math.round(audioData.bpm)}</div>
+              <div>BPM: {Math.round(audioData.bpm)}{audioData.specifiedBpm ? ' (Playlist)' : ' (Detected)'}</div>
               <div>Beat: {Math.round(audioData.beatIntensity * 100)}%</div>
               <div>Low Freq: {Math.round(audioData.lowFrequencyAverage * 100)}%</div>
               <div>High Freq: {Math.round(audioData.highFrequencyAverage * 100)}%</div>
+              <div>Playing: {audioData.isPlaying ? 'Yes' : 'No'}</div>
             </div>
           )}
         </div>

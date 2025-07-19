@@ -141,7 +141,11 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
   const updateVisualizationData = useCallback(() => {
     if (analyserRef.current && onAudioData) {
-      const { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity } = AudioUtils.analyzeAudio(analyserRef.current);
+      const { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity } = AudioUtils.analyzeAudio(
+        analyserRef.current, 
+        isPlaying, 
+        audioFile?.specifiedBpm
+      );
       
       onAudioData({
         frequencyData,
@@ -149,14 +153,16 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
         volume,
         lowFrequencyAverage,
         highFrequencyAverage,
-        bpm,
+        bpm: bpm,
         beatIntensity,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        isPlaying,
+        specifiedBpm: audioFile?.specifiedBpm
       });
       
       animationFrameRef.current = requestAnimationFrame(updateVisualizationData);
     }
-  }, [onAudioData]);
+  }, [onAudioData, isPlaying, audioFile?.specifiedBpm]);
 
   const handleError = useCallback((errorMessage: string) => {
     setError(errorMessage);
