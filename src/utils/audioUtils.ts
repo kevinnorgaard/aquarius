@@ -279,21 +279,30 @@ export class AudioUtils {
    * Detects BPM using onset detection combined with IOI histogram and autocorrelation
    * Enhanced algorithm for improved accuracy and stability
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static detectBPM(frequencyData: Uint8Array, _lowFrequencyAverage: number): { bpm: number; beatIntensity: number } {
+  static detectBPM(frequencyData: Uint8Array, lowFrequencyAverage: number): { bpm: number; beatIntensity: number } {
     const currentTime = Date.now();
     
     // Convert Uint8Array to Float32Array for better precision in calculations
     const spectrum = new Float32Array(frequencyData.length);
+    
+    // Apply low frequency emphasis for bass-heavy music
+    // This helps with beat detection in music where the beat is primarily in the low frequencies
+    const lowFreqEmphasis = Math.min(lowFrequencyAverage * 2, 1.0); // Scale up but cap at 1.0
+    const lowFreqEnd = Math.floor(frequencyData.length / 3); // First third is low frequencies
+    
     for (let i = 0; i < frequencyData.length; i++) {
-      spectrum[i] = frequencyData[i] / 255.0;
+      // Apply more weight to low frequencies based on the low frequency average
+      const emphasis = i < lowFreqEnd ? 1.0 + lowFreqEmphasis : 1.0;
+      spectrum[i] = (frequencyData[i] / 255.0) * emphasis;
     }
     
     // Step 1: Onset detection using spectral flux
     const onsetData = this.detectOnsets(spectrum, currentTime);
     
     // Step 2: Update IOI histogram when new onset is detected
-    if (onsetData.onsetStrength > 0.1) { // Only process significant onsets
+    // Lower the threshold for bass-heavy music to catch more subtle beats
+    const onsetThreshold = lowFrequencyAverage > 0.5 ? 0.08 : 0.1;
+    if (onsetData.onsetStrength > onsetThreshold) {
       this.updateIOIHistogram(currentTime);
     }
     
@@ -304,7 +313,11 @@ export class AudioUtils {
     const finalBPM = this.autocorrelationAnalysis(candidateBPMs);
     
     // Step 5: Calculate beat intensity based on onset strength and BPM alignment
-    const beatIntensity = this.calculateBeatIntensity(onsetData.onsetStrength, finalBPM, currentTime);
+    // For bass-heavy music, amplify the beat intensity slightly
+    const beatIntensityBase = this.calculateBeatIntensity(onsetData.onsetStrength, finalBPM, currentTime);
+    const beatIntensity = lowFrequencyAverage > 0.5 
+      ? Math.min(beatIntensityBase * 1.2, 1.0) // Amplify for bass-heavy music
+      : beatIntensityBase;
     
     return { bpm: finalBPM, beatIntensity };
   }
@@ -312,6 +325,7 @@ export class AudioUtils {
   /**
    * Detects onsets using spectral flux method
    * Calculates the increase in spectral energy between consecutive frames
+   * Enhanced with adaptive thresholding and noise filtering
    */
   private static detectOnsets(spectrum: Float32Array, currentTime: number): { onsetStrength: number } {
     const state = this.bpmDetectionState;
@@ -319,17 +333,43 @@ export class AudioUtils {
     let onsetStrength = 0;
     
     if (state.previousSpectrum) {
-      // Calculate spectral flux (sum of positive differences)
+      // Calculate spectral flux with frequency weighting
+      // Give more weight to mid-range frequencies where beats are often more prominent
       let flux = 0;
+      let totalWeight = 0;
+      
       for (let i = 0; i < spectrum.length; i++) {
+        // Apply frequency weighting - emphasize mid-range frequencies
+        // This helps with beat detection in various music genres
+        let weight = 1.0;
+        
+        // Frequency weighting: emphasize mid-range (where beats are often most clear)
+        const normalizedBin = i / spectrum.length;
+        if (normalizedBin < 0.1) {
+          // Low frequencies (0-10%) - moderate weight
+          weight = 0.8;
+        } else if (normalizedBin < 0.5) {
+          // Mid-low frequencies (10-50%) - highest weight
+          weight = 1.2;
+        } else if (normalizedBin < 0.8) {
+          // Mid-high frequencies (50-80%) - high weight
+          weight = 1.0;
+        } else {
+          // High frequencies (80-100%) - lowest weight
+          weight = 0.6;
+        }
+        
+        // Calculate positive difference (increase in energy)
         const diff = spectrum[i] - state.previousSpectrum[i];
         if (diff > 0) {
-          flux += diff;
+          flux += diff * weight;
         }
+        
+        totalWeight += weight;
       }
       
-      // Normalize flux
-      flux /= spectrum.length;
+      // Normalize flux by total weight
+      flux /= totalWeight;
       
       // Store flux history for adaptive thresholding
       state.spectralFluxHistory.push(flux);
@@ -337,14 +377,43 @@ export class AudioUtils {
         state.spectralFluxHistory.shift();
       }
       
-      // Calculate adaptive threshold (median + factor)
+      // Calculate adaptive threshold with dynamic factor
       const sortedFlux = [...state.spectralFluxHistory].sort((a, b) => a - b);
       const median = sortedFlux[Math.floor(sortedFlux.length / 2)];
-      const threshold = median * 1.5; // Adaptive threshold factor
+      
+      // Calculate variance to determine threshold factor
+      // Higher variance = more dynamic music = lower threshold
+      let variance = 0;
+      for (const f of state.spectralFluxHistory) {
+        variance += (f - median) ** 2;
+      }
+      variance /= state.spectralFluxHistory.length;
+      
+      // Adaptive threshold factor based on variance
+      // For highly dynamic music (high variance), use a lower threshold factor
+      // For steady music (low variance), use a higher threshold factor
+      const varianceNormalized = Math.min(variance * 100, 1.0); // Normalize and cap
+      const thresholdFactor = 1.8 - (varianceNormalized * 0.6); // Range: 1.2 to 1.8
+      
+      const threshold = median * thresholdFactor;
+      
+      // Dynamic minimum time between onsets based on recent history
+      // For fast music, allow onsets to be closer together
+      let minTimeBetweenOnsets = 100; // Default: 100ms (600 BPM max)
+      
+      if (state.bpmHistory.length > 0) {
+        // If we have BPM history, use it to adjust minimum time between onsets
+        const recentBPM = state.bpmHistory[state.bpmHistory.length - 1];
+        // Allow faster onsets for higher BPMs (but keep a reasonable minimum)
+        minTimeBetweenOnsets = Math.max(60, Math.min(150, 60000 / (recentBPM * 2.5)));
+      }
       
       // Detect onset if flux exceeds threshold and enough time has passed
-      if (flux > threshold && (currentTime - state.lastOnsetTime) > 100) { // Min 100ms between onsets
-        onsetStrength = Math.min((flux - threshold) / threshold, 1.0);
+      if (flux > threshold && (currentTime - state.lastOnsetTime) > minTimeBetweenOnsets) {
+        // Calculate onset strength with improved normalization
+        onsetStrength = Math.min((flux - threshold) / (threshold * 0.8), 1.0);
+        
+        // Store onset time
         state.onsetHistory.push(currentTime);
         state.lastOnsetTime = currentTime;
         
@@ -362,14 +431,18 @@ export class AudioUtils {
   /**
    * Updates the Inter-Onset Interval (IOI) histogram
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  private static updateIOIHistogram(_currentTime: number): void {
+  private static updateIOIHistogram(currentTime: number): void {
     const state = this.bpmDetectionState;
     
+    // We need at least 2 onsets to calculate intervals
     if (state.onsetHistory.length >= 2) {
-      // Calculate intervals between consecutive onsets
-      for (let i = 1; i < state.onsetHistory.length; i++) {
-        const interval = state.onsetHistory[i] - state.onsetHistory[i - 1];
+      // Get the most recent onset time (should be the current time)
+      const latestOnsetTime = state.onsetHistory[state.onsetHistory.length - 1];
+      
+      // Calculate intervals between the latest onset and all previous onsets
+      // This ensures we're using the most recent data for BPM detection
+      for (let i = 0; i < state.onsetHistory.length - 1; i++) {
+        const interval = latestOnsetTime - state.onsetHistory[i];
         
         // Only consider reasonable intervals (300ms to 2000ms, corresponding to 200-30 BPM)
         if (interval >= 300 && interval <= 2000) {
