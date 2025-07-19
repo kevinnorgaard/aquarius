@@ -16,6 +16,21 @@ export const SUPPORTED_AUDIO_FORMATS = [
 export const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 export class AudioUtils {
+  // BPM Detection state
+  private static bpmDetectionState: {
+    peakHistory: number[];
+    lastPeakTime: number;
+    bpmHistory: number[];
+    lastBeatTime: number;
+    beatThreshold: number;
+  } = {
+    peakHistory: [],
+    lastPeakTime: 0,
+    bpmHistory: [],
+    lastBeatTime: 0,
+    beatThreshold: 0.3
+  };
+
   /**
    * Validates if the file is a supported audio format
    */
@@ -193,7 +208,7 @@ export class AudioUtils {
   /**
    * Analyzes audio and returns visualization data
    */
-  static analyzeAudio(analyser: AnalyserNode): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number; lowFrequencyAverage: number; highFrequencyAverage: number } {
+  static analyzeAudio(analyser: AnalyserNode): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number; lowFrequencyAverage: number; highFrequencyAverage: number; bpm: number; beatIntensity: number } {
     const frequencyData = new Uint8Array(analyser.frequencyBinCount);
     const timeData = new Uint8Array(analyser.fftSize);
     
@@ -224,6 +239,87 @@ export class AudioUtils {
     }
     const highFrequencyAverage = highFreqSum / (frequencyData.length - highFreqStart) / 255; // Normalize to 0-1
     
-    return { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage };
+    // Detect BPM and beat intensity
+    const bpmData = this.detectBPM(frequencyData, lowFrequencyAverage);
+    
+    return { 
+      frequencyData, 
+      timeData, 
+      volume, 
+      lowFrequencyAverage, 
+      highFrequencyAverage,
+      bpm: bpmData.bpm,
+      beatIntensity: bpmData.beatIntensity
+    };
+  }
+
+  /**
+   * Detects BPM using peak detection in low frequency range
+   */
+  static detectBPM(frequencyData: Uint8Array, lowFrequencyAverage: number): { bpm: number; beatIntensity: number } {
+    const currentTime = Date.now();
+    const state = this.bpmDetectionState;
+    
+    // Detect peak in low frequency (kick drum typically around 60-120 Hz)
+    const isPeak = lowFrequencyAverage > state.beatThreshold;
+    let beatIntensity = 0;
+    
+    if (isPeak && (currentTime - state.lastPeakTime) > 300) { // Minimum 300ms between peaks
+      state.peakHistory.push(currentTime);
+      state.lastPeakTime = currentTime;
+      state.lastBeatTime = currentTime;
+      beatIntensity = Math.min(lowFrequencyAverage * 2, 1); // Amplify beat intensity
+      
+      // Keep only recent peaks (last 10 seconds)
+      state.peakHistory = state.peakHistory.filter(time => currentTime - time < 10000);
+      
+      // Calculate BPM if we have enough peaks
+      if (state.peakHistory.length >= 4) {
+        const intervals = [];
+        for (let i = 1; i < state.peakHistory.length; i++) {
+          intervals.push(state.peakHistory[i] - state.peakHistory[i - 1]);
+        }
+        
+        // Calculate average interval and convert to BPM
+        const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+        const bpm = Math.round(60000 / avgInterval); // Convert ms to BPM
+        
+        // Filter out unrealistic BPMs
+        if (bpm >= 60 && bpm <= 200) {
+          state.bpmHistory.push(bpm);
+          // Keep only recent BPM values (last 20 calculations)
+          if (state.bpmHistory.length > 20) {
+            state.bpmHistory.shift();
+          }
+        }
+      }
+    } else if (currentTime - state.lastBeatTime < 200) {
+      // Fade out beat intensity quickly after a beat
+      beatIntensity = Math.max(0, 1 - (currentTime - state.lastBeatTime) / 200);
+    }
+    
+    // Return smoothed BPM or default
+    let currentBpm = 120; // Default BPM
+    if (state.bpmHistory.length > 0) {
+      // Use median BPM for stability
+      const sortedBpms = [...state.bpmHistory].sort((a, b) => a - b);
+      const medianIndex = Math.floor(sortedBpms.length / 2);
+      currentBpm = sortedBpms[medianIndex];
+    }
+    
+    return { bpm: currentBpm, beatIntensity };
+  }
+
+  /**
+   * Resets BPM detection state (useful when changing audio sources)
+   */
+  static resetBPMDetection(): void {
+    this.bpmDetectionState = {
+      peakHistory: [],
+      lastPeakTime: 0,
+      bpmHistory: [],
+      lastBeatTime: 0,
+      beatThreshold: 0.3
+    };
   }
 }

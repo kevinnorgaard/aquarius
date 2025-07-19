@@ -69,11 +69,13 @@ export default function Home() {
             <div className="mt-6 inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
               <div className={`w-2 h-2 rounded-full ${
                 audioState.type === 'file' ? 'bg-blue-400' :
+                audioState.type === 'playlist' ? 'bg-purple-400' :
                 audioState.type === 'microphone' ? 'bg-green-400' :
                 'bg-gray-400'
               }`} />
               <span className="text-sm text-white">
                 {audioState.type === 'file' ? 'File Input Active' :
+                 audioState.type === 'playlist' ? 'Playlist Track Active' :
                  audioState.type === 'microphone' ? 'Microphone Active' :
                  'No Input'}
                 {audioState.isRecording && ' • Recording'}
