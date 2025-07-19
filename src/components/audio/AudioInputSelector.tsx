@@ -20,6 +20,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   // Audio context and analysis
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -42,6 +44,54 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
     };
     onStateChange?.(audioState);
   }, [inputType, isRecording, isProcessing, error, audioFile, onStateChange]);
+
+  const handlePlayPause = useCallback(() => {
+    if (audioElementRef.current) {
+      if (isPlaying) {
+        audioElementRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioElementRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  }, [isPlaying]);
+
+  const handleSeek = useCallback((newTime: number) => {
+    if (audioElementRef.current) {
+      audioElementRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  }, []);
+
+  // Update time tracking
+  useEffect(() => {
+    const audio = audioElementRef.current;
+    if (!audio) return;
+
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration || 0);
+    };
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [audioFile]);
 
   const cleanup = useCallback(() => {
     // Stop animation frame
@@ -80,6 +130,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
     analyserRef.current = null;
     setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
   }, []);
 
   // Cleanup on unmount
@@ -230,6 +282,10 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
           audioFile={audioFile}
           onRemove={handleRemoveFile}
           isPlaying={isPlaying}
+          onPlayPause={handlePlayPause}
+          onSeek={handleSeek}
+          currentTime={currentTime}
+          duration={duration}
         />
       )}
 
@@ -240,7 +296,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
               Choose Audio Input
             </h2>
-            <p style={{ color: '#d1d5db' }}>
+            <p style={{ color: 'var(--muted-foreground, #d1d5db)' }}>
               Select how you&apos;d like to provide audio for visualization
             </p>
           </div>
@@ -249,13 +305,14 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             {/* File Upload Option */}
             <button
               onClick={() => handleInputTypeSelect('file')}
-              className="p-8 border-2 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+              className="p-8 border rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
               style={{ 
-                borderColor: 'var(--border)'
+                borderColor: 'var(--border)',
+                borderWidth: '1px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary-light)';
-                e.currentTarget.style.backgroundColor = 'rgba(143, 165, 92, 0.1)';
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.backgroundColor = 'rgba(107, 127, 57, 0.1)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--border)';
@@ -272,7 +329,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
                   <h3 className="text-lg font-medium" style={{ color: 'var(--foreground)' }}>
                     Upload Audio File
                   </h3>
-                  <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
+                  <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground, #9ca3af)' }}>
                     Choose an audio file from your device
                   </p>
                 </div>
@@ -282,9 +339,10 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             {/* Playlist Option */}
             <button
               onClick={() => handleInputTypeSelect('playlist')}
-              className="p-8 border-2 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+              className="p-8 border rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
               style={{ 
                 borderColor: 'var(--border)',
+                borderWidth: '1px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = 'var(--primary)';
@@ -305,7 +363,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
                   <h3 className="text-lg font-medium" style={{ color: 'var(--foreground)' }}>
                     Choose from Playlist
                   </h3>
-                  <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
+                  <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground, #9ca3af)' }}>
                     Select from available audio tracks
                   </p>
                 </div>
@@ -315,13 +373,14 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             {/* Microphone Option */}
             <button
               onClick={() => handleInputTypeSelect('microphone')}
-              className="p-8 border-2 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+              className="p-8 border rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
               style={{ 
                 borderColor: 'var(--border)',
+                borderWidth: '1px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary-light)';
-                e.currentTarget.style.backgroundColor = 'rgba(143, 165, 92, 0.1)';
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.backgroundColor = 'rgba(107, 127, 57, 0.1)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = 'var(--border)';
@@ -338,7 +397,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
                   <h3 className="text-lg font-medium" style={{ color: 'var(--foreground)' }}>
                     Use Microphone
                   </h3>
-                  <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
+                  <p className="text-sm mt-1" style={{ color: 'var(--muted-foreground, #9ca3af)' }}>
                     Record audio from your microphone
                   </p>
                 </div>
@@ -388,13 +447,13 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             }}
             className="px-4 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded"
             style={{ 
-              color: '#9ca3af'
+              color: 'var(--muted-foreground, #9ca3af)'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'var(--foreground)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = '#9ca3af';
+              e.currentTarget.style.color = 'var(--muted-foreground, #9ca3af)';
             }}
           >
             ← Choose Different Input

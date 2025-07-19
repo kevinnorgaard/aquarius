@@ -13,6 +13,7 @@
   /* UI colors */
   --card: #0a0a0a; /* Very dark gray */
   --muted: #404040; /* Medium gray */
+  --muted-foreground: #9ca3af; /* Light gray for secondary text */
   --border: #262626; /* Dark border */
   --destructive: #dc2626; /* Red for errors */
 }

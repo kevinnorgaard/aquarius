@@ -117,7 +117,7 @@ export default function PlaylistSelector({ onTrackSelect, onError, isProcessing 
       <div className="w-full max-w-4xl mx-auto">
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading playlist...</p>
+          <p style={{ color: 'var(--muted-foreground)' }}>Loading playlist...</p>
         </div>
       </div>
     );
@@ -153,10 +153,10 @@ export default function PlaylistSelector({ onTrackSelect, onError, isProcessing 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4">
       <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--foreground)' }}>
           Choose from Playlist
         </h3>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p style={{ color: 'var(--muted-foreground)' }}>
           Select a track from the available audio files
         </p>
       </div>
