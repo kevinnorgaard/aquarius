@@ -153,6 +153,13 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
   const updateVisualizationData = useCallback(() => {
     if (analyserRef.current && onAudioData) {
+      // Debug log
+      console.log('AudioInputSelector - updateVisualizationData', {
+        audioFile,
+        specifiedBpm: audioFile?.specifiedBpm,
+        inputType
+      });
+      
       const { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity } = AudioUtils.analyzeAudio(
         analyserRef.current, 
         isPlaying, 
@@ -167,7 +174,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
         actualIsPlaying = volume > volumeThreshold;
       }
       
-      onAudioData({
+      // Ensure specifiedBpm is passed correctly
+      const visualizationData: AudioVisualizationData = {
         frequencyData,
         timeData,
         volume,
@@ -176,9 +184,16 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
         bpm: bpm,
         beatIntensity,
         timestamp: Date.now(),
-        isPlaying: actualIsPlaying,
-        specifiedBpm: audioFile?.specifiedBpm
-      });
+        isPlaying: actualIsPlaying
+      };
+      
+      // Only add specifiedBpm if it's defined
+      if (audioFile?.specifiedBpm !== undefined) {
+        visualizationData.specifiedBpm = audioFile.specifiedBpm;
+        console.log('Setting specifiedBpm in visualization data:', audioFile.specifiedBpm);
+      }
+      
+      onAudioData(visualizationData);
       
       animationFrameRef.current = requestAnimationFrame(updateVisualizationData);
     }
@@ -222,6 +237,9 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       analyser.connect(audioContext.destination);
       sourceRef.current = source;
 
+      // Debug log
+      console.log('AudioInputSelector - handleFileSelect - selectedFile:', selectedFile);
+      
       setAudioFile(selectedFile);
       setInputType(inputType === 'playlist' ? 'playlist' : 'file');
       setIsProcessing(false);
