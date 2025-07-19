@@ -217,6 +217,9 @@ export class AudioUtils {
    * Analyzes audio and returns visualization data
    */
   static analyzeAudio(analyser: AnalyserNode, isPlaying: boolean = true, specifiedBpm?: number): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number; lowFrequencyAverage: number; highFrequencyAverage: number; bpm: number; beatIntensity: number; isPlaying: boolean; specifiedBpm?: number } {
+    // Debug log
+    console.log('AudioUtils.analyzeAudio - specifiedBpm:', specifiedBpm, 'type:', typeof specifiedBpm);
+    
     const frequencyData = new Uint8Array(analyser.frequencyBinCount);
     const timeData = new Uint8Array(analyser.fftSize);
     
