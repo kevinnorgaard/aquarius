@@ -44,8 +44,9 @@ function AnimatedModel({ gltfFile, audioData }: AnimatedModelProps) {
 
     const { lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity, isPlaying } = audioData;
     
-    // Stop all animations when audio is not playing
-    if (!isPlaying) return;
+    // For microphone input, we want smoother transitions rather than abrupt stops
+    // We'll scale the animation intensity based on audio levels instead of stopping completely
+    const animationScale = isPlaying ? 1.0 : 0.1; // Reduce animation intensity when not "playing" but don't stop completely
 
     // Animate low frequency meshes (bass response) - removed rotation
     lowFreqMeshes.forEach((mesh, index) => {
