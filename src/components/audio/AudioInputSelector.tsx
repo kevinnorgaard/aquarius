@@ -184,7 +184,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
         bpm: bpm,
         beatIntensity,
         timestamp: Date.now(),
-        isPlaying: actualIsPlaying
+        isPlaying: actualIsPlaying,
+        isBpmSpecified: audioFile?.specifiedBpm !== undefined
       };
       
       // Only add specifiedBpm if it's defined
@@ -272,7 +273,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             bpm: bpm,
             beatIntensity,
             timestamp: Date.now(),
-            isPlaying: true
+            isPlaying: true,
+            isBpmSpecified: selectedFile.specifiedBpm !== undefined
           };
           
           // Only add specifiedBpm if it's defined
