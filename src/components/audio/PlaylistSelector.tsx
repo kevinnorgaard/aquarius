@@ -19,34 +19,48 @@ export default function PlaylistSelector({ onTrackSelect, onError, isProcessing 
     try {
       setIsLoading(true);
       
+      // Get the base path from the current location
+      const basePath = window.location.pathname.startsWith('/aquarius') ? '/aquarius' : '';
+      
       // Try to load sample tracks metadata
-      const response = await fetch('/audio/sample-tracks.json');
+      const response = await fetch(`${basePath}/audio/sample-tracks.json`);
       if (response.ok) {
         const sampleTracks = await response.json() as { name: string; filename: string; description?: string; duration?: number; bpm?: number; genre?: string }[];
         
         // Convert to PlaylistTrack format and add URLs
         const playlistTracks: PlaylistTrack[] = sampleTracks.map((track) => ({
           ...track,
-          url: `/audio/${track.filename}`
+          url: `${basePath}/audio/${track.filename}`
         }));
         
         // Filter tracks that actually exist by attempting to fetch them
         const existingTracks: PlaylistTrack[] = [];
+        const missingTracks: string[] = [];
         
         for (const track of playlistTracks) {
           try {
             const audioResponse = await fetch(track.url, { method: 'HEAD' });
             if (audioResponse.ok) {
               existingTracks.push(track);
+            } else {
+              missingTracks.push(track.filename);
+              console.warn(`Audio file not found: ${track.filename} (${audioResponse.status})`);
             }
-          } catch {
-            // Track doesn't exist, skip it
+          } catch (error) {
+            missingTracks.push(track.filename);
+            console.warn(`Failed to check audio file: ${track.filename}`, error);
           }
+        }
+        
+        if (missingTracks.length > 0) {
+          console.warn(`Missing audio files: ${missingTracks.join(', ')}`);
         }
         
         setTracks(existingTracks);
       } else {
-        // Fallback: scan audio directory (this would need backend support in real implementation)
+        // sample-tracks.json not found
+        console.warn(`Playlist metadata not found at ${basePath}/audio/sample-tracks.json`);
+        onError(`Playlist metadata file not found. Please ensure sample-tracks.json exists in the public/audio/ directory.`);
         setTracks([]);
       }
     } catch (error) {
@@ -69,18 +83,32 @@ export default function PlaylistSelector({ onTrackSelect, onError, isProcessing 
       // Create a temporary file object from the track URL
       const response = await fetch(track.url);
       if (!response.ok) {
-        throw new Error(`Failed to load track: ${track.name}`);
+        throw new Error(`Failed to load track "${track.name}": ${response.status} ${response.statusText}`);
       }
       
       const blob = await response.blob();
-      const file = new File([blob], track.filename, { type: 'audio/mpeg' });
+      
+      // Validate file format
+      if (!blob.type.startsWith('audio/') && !AudioUtils.isValidAudioExtension(track.filename)) {
+        throw new Error(`Unsupported file format for "${track.name}". Expected audio file but got ${blob.type || 'unknown type'}.`);
+      }
+      
+      const file = new File([blob], track.filename, { 
+        type: blob.type || AudioUtils.getFormatFromExtension(track.filename) 
+      });
+      
+      // Validate file size
+      if (!AudioUtils.isValidFileSize(file)) {
+        throw new Error(`File "${track.name}" is too large. Maximum size is 50MB.`);
+      }
       
       // Create AudioFile object
       const audioFile = await AudioUtils.createAudioFile(file);
       
       onTrackSelect(audioFile);
     } catch (error) {
-      onError(error instanceof Error ? error.message : 'Failed to load selected track');
+      onError(error instanceof Error ? error.message : `Failed to load selected track: ${track.name}`);
+      setSelectedTrack(null);
     }
   }, [onTrackSelect, onError]);
 
