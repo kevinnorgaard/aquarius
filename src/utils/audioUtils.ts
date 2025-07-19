@@ -216,7 +216,7 @@ export class AudioUtils {
   /**
    * Analyzes audio and returns visualization data
    */
-  static analyzeAudio(analyser: AnalyserNode, isPlaying: boolean = true, specifiedBpm?: number): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number; lowFrequencyAverage: number; highFrequencyAverage: number; bpm: number; beatIntensity: number; isPlaying: boolean; specifiedBpm?: number } {
+  static analyzeAudio(analyser: AnalyserNode, isPlaying: boolean = true, specifiedBpm?: number): { frequencyData: Uint8Array; timeData: Uint8Array; volume: number; lowFrequencyAverage: number; highFrequencyAverage: number; bpm: number; beatIntensity: number; isPlaying: boolean; specifiedBpm?: number; isBpmSpecified: boolean } {
     // Debug log
     console.log('AudioUtils.analyzeAudio - specifiedBpm:', specifiedBpm, 'type:', typeof specifiedBpm);
     
@@ -276,7 +276,8 @@ export class AudioUtils {
       bpm: bpmData.bpm,
       beatIntensity: bpmData.beatIntensity,
       isPlaying,
-      specifiedBpm
+      specifiedBpm,
+      isBpmSpecified: specifiedBpm !== undefined
     };
   }
   
