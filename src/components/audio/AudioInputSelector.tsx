@@ -214,12 +214,12 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <div className="border rounded-lg p-4" style={{ backgroundColor: 'rgba(220, 38, 38, 0.1)', borderColor: 'rgba(220, 38, 38, 0.2)' }}>
           <div className="flex items-center">
-            <svg className="w-5 h-5 text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-5 h-5 mr-3" style={{ color: 'var(--destructive)' }} fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
-            <p className="text-red-700 dark:text-red-400">{error}</p>
+            <p style={{ color: 'var(--destructive)' }}>{error}</p>
           </div>
         </div>
       )}
@@ -237,10 +237,10 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       {!inputType && (
         <div className="text-center space-y-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>
               Choose Audio Input
             </h2>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p style={{ color: '#d1d5db' }}>
               Select how you&apos;d like to provide audio for visualization
             </p>
           </div>
@@ -249,25 +249,31 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             {/* File Upload Option */}
             <button
               onClick={() => handleInputTypeSelect('file')}
-              className="
-                p-8 border-2 border-gray-200 dark:border-gray-700 rounded-lg
-                hover:border-blue-400 dark:hover:border-blue-500
-                hover:bg-blue-50 dark:hover:bg-blue-900/20
-                transition-all duration-200 ease-in-out
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-              "
+              className="p-8 border-2 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{ 
+                borderColor: 'var(--border)',
+                ':hover': { borderColor: 'var(--primary-light)', backgroundColor: 'rgba(143, 165, 92, 0.1)' }
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary-light)';
+                e.currentTarget.style.backgroundColor = 'rgba(143, 165, 92, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <div className="text-center space-y-4">
-                <div className="mx-auto w-12 h-12 text-blue-600">
+                <div className="mx-auto w-12 h-12" style={{ color: 'var(--primary-light)' }}>
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-medium" style={{ color: 'var(--foreground)' }}>
                     Upload Audio File
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
                     Choose an audio file from your device
                   </p>
                 </div>
@@ -277,25 +283,30 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             {/* Playlist Option */}
             <button
               onClick={() => handleInputTypeSelect('playlist')}
-              className="
-                p-8 border-2 border-gray-200 dark:border-gray-700 rounded-lg
-                hover:border-purple-400 dark:hover:border-purple-500
-                hover:bg-purple-50 dark:hover:bg-purple-900/20
-                transition-all duration-200 ease-in-out
-                focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
-              "
+              className="p-8 border-2 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{ 
+                borderColor: 'var(--border)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.backgroundColor = 'rgba(107, 127, 57, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <div className="text-center space-y-4">
-                <div className="mx-auto w-12 h-12 text-purple-600">
+                <div className="mx-auto w-12 h-12" style={{ color: 'var(--primary)' }}>
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-medium" style={{ color: 'var(--foreground)' }}>
                     Choose from Playlist
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
                     Select from available audio tracks
                   </p>
                 </div>
@@ -305,25 +316,30 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             {/* Microphone Option */}
             <button
               onClick={() => handleInputTypeSelect('microphone')}
-              className="
-                p-8 border-2 border-gray-200 dark:border-gray-700 rounded-lg
-                hover:border-green-400 dark:hover:border-green-500
-                hover:bg-green-50 dark:hover:bg-green-900/20
-                transition-all duration-200 ease-in-out
-                focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
-              "
+              className="p-8 border-2 rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{ 
+                borderColor: 'var(--border)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--primary-light)';
+                e.currentTarget.style.backgroundColor = 'rgba(143, 165, 92, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               <div className="text-center space-y-4">
-                <div className="mx-auto w-12 h-12 text-green-600">
+                <div className="mx-auto w-12 h-12" style={{ color: 'var(--primary-light)' }}>
                   <svg fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                  <h3 className="text-lg font-medium" style={{ color: 'var(--foreground)' }}>
                     Use Microphone
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
                     Record audio from your microphone
                   </p>
                 </div>
@@ -371,12 +387,17 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
               setAudioFile(null);
               setError(null);
             }}
-            className="
-              px-4 py-2 text-sm text-gray-600 dark:text-gray-400
-              hover:text-gray-900 dark:hover:text-gray-100
-              transition-colors duration-200
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded
-            "
+            className="px-4 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 rounded"
+            style={{ 
+              color: '#9ca3af',
+              ':hover': { color: 'var(--foreground)' }
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--foreground)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#9ca3af';
+            }}
           >
             ← Choose Different Input
           </button>
