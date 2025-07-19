@@ -7,7 +7,7 @@ A website that transforms music into dynamic 3D visualizations in real-time.
 - **Audio File Upload**: Support for MP3, WAV, OGG, and M4A formats
 - **Built-in Playlist**: Choose from pre-loaded audio tracks for instant visualization
 - **Live Microphone Input**: Real-time audio visualization from microphone
-- **BPM Detection**: Automatic beats per minute detection for rhythm-based animations
+- **BPM Detection**: Advanced beats per minute detection using onset detection, IOI histogram analysis, and autocorrelation for enhanced accuracy and stability
 - **3D Model Visualization**: Upload glTF models that respond to audio with beat-synchronized movement
 - **Dynamic Visualizations**: Real-time frequency and time domain analysis
 - **Responsive Design**: Built with Tailwind CSS for all screen sizes
@@ -28,13 +28,41 @@ To use the playlist feature:
 
 See `public/audio/README.md` for detailed instructions.
 
+## BPM Detection Algorithm
+
+Aquarius uses an advanced BPM detection system that combines multiple audio analysis techniques for enhanced accuracy and stability:
+
+### Onset Detection
+- **Spectral Flux Analysis**: Calculates the increase in spectral energy between consecutive audio frames
+- **Adaptive Thresholding**: Uses dynamic thresholds based on median spectral flux values
+- **Peak Detection**: Identifies significant onset events with minimum time spacing to avoid false positives
+
+### IOI Histogram Analysis
+- **Inter-Onset Interval Calculation**: Measures time intervals between detected onsets
+- **Histogram Building**: Creates a frequency distribution of onset intervals
+- **Candidate BPM Extraction**: Identifies potential BPMs from histogram peaks, including harmonics and sub-harmonics
+- **Temporal Decay**: Gradually reduces influence of old onset data for adaptive behavior
+
+### Autocorrelation Enhancement
+- **Pattern Matching**: Correlates onset patterns with candidate BPMs to find the best fit
+- **Harmonic Analysis**: Considers multiple tempo relationships (double-time, half-time, etc.)
+- **Confidence Scoring**: Weights BPM candidates based on how well they align with onset patterns
+
+### Stability Features
+- **Weighted Averaging**: Recent BPM estimates have higher influence on final output
+- **Outlier Filtering**: Removes unrealistic BPM values (outside 60-200 BPM range)
+- **State Persistence**: Maintains detection state across audio frames for consistency
+- **Graceful Degradation**: Provides sensible defaults when insufficient data is available
+
+This multi-stage approach ensures robust BPM detection across various musical genres and recording qualities.
+
 ## 3D Model Visualization
 
 Upload glTF (.gltf or .glb) files to create audio-responsive 3D visualizations:
 
-- **BPM Synchronization**: Models slide left/right in sync with detected beats
+- **BPM Synchronization**: Models slide left/right in sync with detected beats using advanced onset detection
 - **Frequency Response**: Low frequencies control scaling, high frequencies control positioning
-- **Real-time Analysis**: Live BPM detection and beat intensity tracking
+- **Real-time Analysis**: Live BPM detection with IOI histogram and autocorrelation for stability
 
 ## Getting Started
 
