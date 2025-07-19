@@ -8,31 +8,14 @@
 const fs = require('fs');
 const path = require('path');
 
-// Create placeholder info file instead of actual audio (to avoid large files in repo)
 const sampleTracks = [
   {
-    name: 'Electronic Beat 120 BPM',
-    filename: 'electronic-beat-120.mp3',
-    description: 'Synthesized electronic beat at 120 BPM',
-    duration: 30,
-    bpm: 120,
-    genre: 'Electronic'
-  },
-  {
-    name: 'Rock Rhythm 140 BPM', 
-    filename: 'rock-rhythm-140.mp3',
-    description: 'Rock-style drum pattern at 140 BPM',
-    duration: 30,
-    bpm: 140,
-    genre: 'Rock'
-  },
-  {
-    name: 'Ambient Pulse 80 BPM',
-    filename: 'ambient-pulse-80.mp3', 
-    description: 'Slow ambient pulse at 80 BPM',
-    duration: 30,
-    bpm: 80,
-    genre: 'Ambient'
+    name: "Skrillex - With You Friends",
+    filename: "skrillex_with_you_friends.mp3",
+    description: "Dubstep at 130 BPM",
+    duration: 382,
+    bpm: 130,
+    genre: "Dubstep"
   }
 ];
 
