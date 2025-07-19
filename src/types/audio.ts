@@ -5,6 +5,8 @@ export interface AudioFile {
   duration?: number;
   format: string;
   url: string;
+  // Add specified BPM for playlist tracks
+  specifiedBpm?: number;
 }
 
 export interface GLTFFile {
@@ -50,6 +52,10 @@ export interface AudioVisualizationData {
   // Add BPM detection
   bpm: number;
   beatIntensity: number; // 0-1, intensity of the current beat
+  // Add audio playing state
+  isPlaying: boolean;
+  // Add specified BPM for playlist tracks
+  specifiedBpm?: number;
 }
 
 export type AudioInputType = 'file' | 'microphone' | 'playlist';
@@ -68,6 +74,8 @@ export interface PlaylistTrack {
   bpm?: number;
   genre?: string;
   url: string;
+  // Add flag to indicate this is from playlist
+  isFromPlaylist?: boolean;
 }
 
 export interface PlaylistData {

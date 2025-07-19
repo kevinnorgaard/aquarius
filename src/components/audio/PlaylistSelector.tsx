@@ -105,6 +105,11 @@ export default function PlaylistSelector({ onTrackSelect, onError, isProcessing 
       // Create AudioFile object
       const audioFile = await AudioUtils.createAudioFile(file);
       
+      // Add specified BPM if this is from playlist
+      if (track.bpm) {
+        audioFile.specifiedBpm = track.bpm;
+      }
+      
       onTrackSelect(audioFile);
     } catch (error) {
       onError(error instanceof Error ? error.message : `Failed to load selected track: ${track.name}`);
