@@ -56,6 +56,8 @@ export interface AudioVisualizationData {
   isPlaying: boolean;
   // Add specified BPM for playlist tracks
   specifiedBpm?: number;
+  // Add flag to indicate if BPM is specified or detected
+  isBpmSpecified: boolean;
 }
 
 export type AudioInputType = 'file' | 'microphone' | 'playlist';
