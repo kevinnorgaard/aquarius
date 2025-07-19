@@ -5,7 +5,10 @@ A website that transforms music into dynamic 3D visualizations in real-time.
 ## Features
 
 - **Audio File Upload**: Support for MP3, WAV, OGG, and M4A formats
+- **Built-in Playlist**: Choose from pre-loaded audio tracks for instant visualization
 - **Live Microphone Input**: Real-time audio visualization from microphone
+- **BPM Detection**: Automatic beats per minute detection for rhythm-based animations
+- **3D Model Visualization**: Upload glTF models that respond to audio with beat-synchronized movement
 - **Dynamic Visualizations**: Real-time frequency and time domain analysis
 - **Responsive Design**: Built with Tailwind CSS for all screen sizes
 - **Privacy First**: All audio processing happens locally in the browser
@@ -13,6 +16,25 @@ A website that transforms music into dynamic 3D visualizations in real-time.
 ## Demo
 
 Visit the live demo at: [https://kevinnorgaard.github.io/aquarius/](https://kevinnorgaard.github.io/aquarius/)
+
+## Audio Playlist Setup
+
+To use the playlist feature:
+
+1. Add audio files to the `public/audio/` directory
+2. Supported formats: MP3, WAV, OGG, M4A (max 50MB per file)
+3. Restart the development server
+4. Navigate to "Choose from Playlist" in the audio input section
+
+See `public/audio/README.md` for detailed instructions.
+
+## 3D Model Visualization
+
+Upload glTF (.gltf or .glb) files to create audio-responsive 3D visualizations:
+
+- **BPM Synchronization**: Models slide left/right in sync with detected beats
+- **Frequency Response**: Low frequencies control scaling, high frequencies control positioning
+- **Real-time Analysis**: Live BPM detection and beat intensity tracking
 
 ## Getting Started
 

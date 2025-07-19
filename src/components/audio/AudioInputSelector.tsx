@@ -6,6 +6,7 @@ import { AudioUtils } from '@/utils/audioUtils';
 import FileUpload from './FileUpload';
 import MicrophoneInput from './MicrophoneInput';
 import AudioFileDisplay from './AudioFileDisplay';
+import PlaylistSelector from './PlaylistSelector';
 
 interface AudioInputSelectorProps {
   onAudioData?: (data: AudioVisualizationData) => void;
@@ -88,7 +89,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
   const updateVisualizationData = useCallback(() => {
     if (analyserRef.current && onAudioData) {
-      const { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage } = AudioUtils.analyzeAudio(analyserRef.current);
+      const { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity } = AudioUtils.analyzeAudio(analyserRef.current);
       
       onAudioData({
         frequencyData,
@@ -96,6 +97,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
         volume,
         lowFrequencyAverage,
         highFrequencyAverage,
+        bpm,
+        beatIntensity,
         timestamp: Date.now()
       });
       
@@ -115,6 +118,9 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       setError(null);
       setIsProcessing(true);
       cleanup();
+
+      // Reset BPM detection for new audio
+      AudioUtils.resetBPMDetection();
 
       // Create audio context
       const audioContext = AudioUtils.createAudioContext();
@@ -139,7 +145,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       sourceRef.current = source;
 
       setAudioFile(selectedFile);
-      setInputType('file');
+      setInputType(inputType === 'playlist' ? 'playlist' : 'file');
       setIsProcessing(false);
 
       // Auto-play and start visualization
@@ -149,12 +155,15 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
     } catch (error) {
       handleError(error instanceof Error ? error.message : 'Failed to process audio file');
     }
-  }, [updateVisualizationData, cleanup, handleError]);
+  }, [updateVisualizationData, cleanup, handleError, inputType]);
 
   const handleMicrophoneStart = useCallback(async (stream: MediaStream) => {
     try {
       setError(null);
       cleanup();
+
+      // Reset BPM detection for new audio
+      AudioUtils.resetBPMDetection();
 
       // Create audio context
       const audioContext = AudioUtils.createAudioContext();
@@ -216,7 +225,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       )}
 
       {/* Current Audio File Display */}
-      {audioFile && inputType === 'file' && (
+      {audioFile && (inputType === 'file' || inputType === 'playlist') && (
         <AudioFileDisplay
           audioFile={audioFile}
           onRemove={handleRemoveFile}
@@ -236,7 +245,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* File Upload Option */}
             <button
               onClick={() => handleInputTypeSelect('file')}
@@ -260,6 +269,34 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Choose an audio file from your device
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            {/* Playlist Option */}
+            <button
+              onClick={() => handleInputTypeSelect('playlist')}
+              className="
+                p-8 border-2 border-gray-200 dark:border-gray-700 rounded-lg
+                hover:border-purple-400 dark:hover:border-purple-500
+                hover:bg-purple-50 dark:hover:bg-purple-900/20
+                transition-all duration-200 ease-in-out
+                focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2
+              "
+            >
+              <div className="text-center space-y-4">
+                <div className="mx-auto w-12 h-12 text-purple-600">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    Choose from Playlist
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Select from available audio tracks
                   </p>
                 </div>
               </div>
@@ -300,6 +337,15 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       {inputType === 'file' && !audioFile && (
         <FileUpload
           onFileSelect={handleFileSelect}
+          onError={handleError}
+          isProcessing={isProcessing}
+        />
+      )}
+
+      {/* Playlist Interface */}
+      {inputType === 'playlist' && !audioFile && (
+        <PlaylistSelector
+          onTrackSelect={handleFileSelect}
           onError={handleError}
           isProcessing={isProcessing}
         />

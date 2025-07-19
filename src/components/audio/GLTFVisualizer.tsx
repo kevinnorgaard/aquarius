@@ -42,38 +42,47 @@ function AnimatedModel({ gltfFile, audioData }: AnimatedModelProps) {
   useFrame(() => {
     if (!audioData || !groupRef.current) return;
 
-    const { lowFrequencyAverage, highFrequencyAverage, volume } = audioData;
+    const { lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity } = audioData;
 
-    // Animate low frequency meshes (bass response)
+    // Animate low frequency meshes (bass response) - removed rotation
     lowFreqMeshes.forEach((mesh, index) => {
       const intensity = lowFrequencyAverage * 2; // Amplify the effect
       const offset = index * 0.1; // Stagger the animation
       
-      // Scale animation
+      // Scale animation (keep this)
       const scale = 1 + intensity * 0.3;
       mesh.scale.setScalar(scale);
       
-      // Rotation animation
-      mesh.rotation.y += intensity * 0.02;
-      mesh.rotation.x = Math.sin(Date.now() * 0.001 + offset) * intensity * 0.1;
+      // Remove rotation, keep position animation
+      mesh.position.y = Math.sin(Date.now() * 0.001 + offset) * intensity * 0.2;
     });
 
-    // Animate high frequency meshes (treble response)
+    // Animate high frequency meshes (treble response) - removed rapid rotation
     highFreqMeshes.forEach((mesh, index) => {
       const intensity = highFrequencyAverage * 2; // Amplify the effect
       const offset = index * 0.15; // Different stagger for variety
       
       // Position animation (more rapid movement for high frequencies)
       mesh.position.y = Math.sin(Date.now() * 0.005 + offset) * intensity * 0.5;
-      mesh.position.x = Math.cos(Date.now() * 0.004 + offset) * intensity * 0.3;
-      
-      // Rotation animation (faster for high frequencies)
-      mesh.rotation.z += intensity * 0.03;
-      mesh.rotation.y = Math.cos(Date.now() * 0.002 + offset) * intensity * 0.2;
+      mesh.position.z = Math.cos(Date.now() * 0.004 + offset) * intensity * 0.2;
     });
 
-    // Overall model rotation based on volume
-    groupRef.current.rotation.y += volume * 0.01;
+    // BPM-based left/right sliding animation for the whole model
+    const beatTime = 60 / bpm; // Time between beats in seconds
+    const beatPhase = (Date.now() / 1000) % beatTime; // Current position in beat cycle
+    const beatProgress = beatPhase / beatTime; // 0-1 progress through current beat
+    
+    // Create a smooth sliding motion synchronized with the beat
+    const slideX = Math.sin(beatProgress * Math.PI * 2) * 0.5 * (1 + beatIntensity);
+    groupRef.current.position.x = slideX;
+    
+    // Add subtle vertical bounce on beat
+    const bounceY = beatIntensity * Math.sin(beatProgress * Math.PI * 4) * 0.2;
+    groupRef.current.position.y = bounceY;
+    
+    // Optional: slight Z-axis movement for depth
+    const depthZ = Math.cos(beatProgress * Math.PI * 2) * 0.3 * beatIntensity;
+    groupRef.current.position.z = depthZ;
   });
 
   return (
@@ -163,6 +172,8 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
           
           {audioData && (
             <div className="absolute top-2 right-2 text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">
+              <div>BPM: {Math.round(audioData.bpm)}</div>
+              <div>Beat: {Math.round(audioData.beatIntensity * 100)}%</div>
               <div>Low Freq: {Math.round(audioData.lowFrequencyAverage * 100)}%</div>
               <div>High Freq: {Math.round(audioData.highFrequencyAverage * 100)}%</div>
             </div>
@@ -170,7 +181,7 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
         </div>
         
         <div className="mt-2 text-xs text-gray-400">
-          <p>🎵 Low frequencies animate scale & rotation • High frequencies animate position & rapid rotation</p>
+          <p>🎵 BPM detection drives left/right sliding • Low frequencies animate scale • High frequencies animate position</p>
         </div>
       </div>
     </div>

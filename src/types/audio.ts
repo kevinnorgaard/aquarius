@@ -23,7 +23,7 @@ export interface MicrophoneConfig {
 }
 
 export interface AudioInputState {
-  type: 'file' | 'microphone' | null;
+  type: 'file' | 'microphone' | 'playlist' | null;
   isRecording: boolean;
   isProcessing: boolean;
   error: string | null;
@@ -47,12 +47,38 @@ export interface AudioVisualizationData {
   // Add frequency analysis for low/high ranges
   lowFrequencyAverage: number;
   highFrequencyAverage: number;
+  // Add BPM detection
+  bpm: number;
+  beatIntensity: number; // 0-1, intensity of the current beat
 }
 
-export type AudioInputType = 'file' | 'microphone';
+export type AudioInputType = 'file' | 'microphone' | 'playlist';
 
 export interface AudioInputProps {
   onAudioLoad?: (audioData: AudioVisualizationData) => void;
   onError?: (error: string) => void;
   onStateChange?: (state: AudioInputState) => void;
+}
+
+export interface PlaylistTrack {
+  name: string;
+  filename: string;
+  description?: string;
+  duration?: number;
+  bpm?: number;
+  genre?: string;
+  url: string;
+}
+
+export interface PlaylistData {
+  tracks: PlaylistTrack[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface BPMDetectionData {
+  bpm: number;
+  confidence: number;
+  lastBeatTime: number;
+  beatIntensity: number;
 }
