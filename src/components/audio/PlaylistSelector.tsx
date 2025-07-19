@@ -107,7 +107,11 @@ export default function PlaylistSelector({ onTrackSelect, onError, isProcessing 
       
       // Add specified BPM if this is from playlist
       if (track.bpm) {
-        audioFile.specifiedBpm = track.bpm;
+        // Ensure specifiedBpm is a number
+        audioFile.specifiedBpm = Number(track.bpm);
+        console.log('PlaylistSelector - Setting specifiedBpm:', audioFile.specifiedBpm, 'type:', typeof audioFile.specifiedBpm, 'on audioFile:', audioFile);
+      } else {
+        console.log('PlaylistSelector - No BPM specified for track:', track.name);
       }
       
       onTrackSelect(audioFile);
