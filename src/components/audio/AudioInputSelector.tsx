@@ -41,7 +41,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       source: sourceRef.current
     };
     onStateChange?.(audioState);
-  }, [inputType, isRecording, isProcessing, error, audioFile]); // Removed onStateChange from dependencies
+  }, [inputType, isRecording, isProcessing, error, audioFile, onStateChange]);
 
   const cleanup = useCallback(() => {
     // Stop animation frame
