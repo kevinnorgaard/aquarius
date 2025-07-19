@@ -176,10 +176,6 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
           
           {audioData && (
             <div className="absolute top-2 right-2 text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">
-              {/* Debug info */}
-              <div className="text-xs text-red-400 mb-1">
-                Debug: specifiedBpm={audioData.specifiedBpm?.toString() || 'undefined'} (type: {typeof audioData.specifiedBpm})
-              </div>
               <div>BPM: {Math.round(audioData.bpm)}{audioData.isBpmSpecified ? ' (Specified)' : ' (Detected)'}</div>
               <div>Beat: {Math.round(audioData.beatIntensity * 100)}%</div>
               <div>Low Freq: {Math.round(audioData.lowFrequencyAverage * 100)}%</div>
