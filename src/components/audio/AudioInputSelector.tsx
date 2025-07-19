@@ -159,6 +159,14 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
         audioFile?.specifiedBpm
       );
       
+      // For microphone input, determine isPlaying based on actual audio activity
+      let actualIsPlaying = isPlaying;
+      if (inputType === 'microphone' && isRecording) {
+        // Consider audio as "playing" if volume is above a reasonable threshold
+        const volumeThreshold = 0.01; // Adjust threshold as needed
+        actualIsPlaying = volume > volumeThreshold;
+      }
+      
       onAudioData({
         frequencyData,
         timeData,
@@ -168,13 +176,13 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
         bpm: bpm,
         beatIntensity,
         timestamp: Date.now(),
-        isPlaying,
+        isPlaying: actualIsPlaying,
         specifiedBpm: audioFile?.specifiedBpm
       });
       
       animationFrameRef.current = requestAnimationFrame(updateVisualizationData);
     }
-  }, [onAudioData, isPlaying, audioFile?.specifiedBpm]);
+  }, [onAudioData, isPlaying, audioFile?.specifiedBpm, inputType, isRecording]);
 
   const handleError = useCallback((errorMessage: string) => {
     setError(errorMessage);
@@ -252,8 +260,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
       setInputType('microphone');
       setIsRecording(true);
-      // Fix: Set isPlaying to true for microphone input to enable 3D visualization
-      setIsPlaying(true);
+      // Note: isPlaying will be determined dynamically based on audio activity
       updateVisualizationData();
     } catch (error) {
       handleError(error instanceof Error ? error.message : 'Failed to start microphone input');
@@ -262,8 +269,7 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
   const handleMicrophoneStop = useCallback(() => {
     setIsRecording(false);
-    // Fix: Set isPlaying to false when microphone stops
-    setIsPlaying(false);
+    // Note: isPlaying will automatically be set to false when audio stops being detected
     cleanup();
   }, [cleanup]);
 
