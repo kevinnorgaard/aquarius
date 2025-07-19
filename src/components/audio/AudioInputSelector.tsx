@@ -82,14 +82,26 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
       setCurrentTime(0);
     };
 
+    const handlePlay = () => {
+      setIsPlaying(true);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
 
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
     };
   }, [audioFile]);
 
@@ -240,6 +252,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
       setInputType('microphone');
       setIsRecording(true);
+      // Fix: Set isPlaying to true for microphone input to enable 3D visualization
+      setIsPlaying(true);
       updateVisualizationData();
     } catch (error) {
       handleError(error instanceof Error ? error.message : 'Failed to start microphone input');
@@ -248,6 +262,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
   const handleMicrophoneStop = useCallback(() => {
     setIsRecording(false);
+    // Fix: Set isPlaying to false when microphone stops
+    setIsPlaying(false);
     cleanup();
   }, [cleanup]);
 
