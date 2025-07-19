@@ -29,6 +29,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
   const sourceRef = useRef<AudioBufferSourceNode | MediaStreamAudioSourceNode | MediaElementAudioSourceNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  // Store the last selected file in a ref to use if audioFile state is null
+  const lastSelectedFileRef = useRef<AudioFile | null>(null);
 
   // Notify parent of state changes
   useEffect(() => {
@@ -153,17 +155,22 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
   const updateVisualizationData = useCallback(() => {
     if (analyserRef.current && onAudioData) {
+      // Use lastSelectedFileRef if audioFile is null
+      const effectiveFile = audioFile || lastSelectedFileRef.current;
+      
       // Debug log
       console.log('AudioInputSelector - updateVisualizationData', {
         audioFile,
-        specifiedBpm: audioFile?.specifiedBpm,
+        lastSelectedFile: lastSelectedFileRef.current,
+        effectiveFile,
+        specifiedBpm: effectiveFile?.specifiedBpm,
         inputType
       });
       
       const { frequencyData, timeData, volume, lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity } = AudioUtils.analyzeAudio(
         analyserRef.current, 
         isPlaying, 
-        audioFile?.specifiedBpm
+        effectiveFile?.specifiedBpm
       );
       
       // For microphone input, determine isPlaying based on actual audio activity
@@ -185,13 +192,13 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
         beatIntensity,
         timestamp: Date.now(),
         isPlaying: actualIsPlaying,
-        isBpmSpecified: audioFile?.specifiedBpm !== undefined
+        isBpmSpecified: effectiveFile?.specifiedBpm !== undefined
       };
       
       // Only add specifiedBpm if it's defined
-      if (audioFile?.specifiedBpm !== undefined) {
-        visualizationData.specifiedBpm = audioFile.specifiedBpm;
-        console.log('Setting specifiedBpm in visualization data:', audioFile.specifiedBpm);
+      if (effectiveFile?.specifiedBpm !== undefined) {
+        visualizationData.specifiedBpm = effectiveFile.specifiedBpm;
+        console.log('Setting specifiedBpm in visualization data:', effectiveFile.specifiedBpm);
       }
       
       onAudioData(visualizationData);
@@ -240,6 +247,9 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
       // Debug log
       console.log('AudioInputSelector - handleFileSelect - selectedFile:', selectedFile);
+      
+      // Store the selected file in the ref for use if audioFile state is null
+      lastSelectedFileRef.current = selectedFile;
       
       // Set audioFile state first
       setAudioFile(selectedFile);
