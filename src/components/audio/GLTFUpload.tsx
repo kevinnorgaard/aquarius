@@ -52,10 +52,10 @@ export default function GLTFUpload({ onFileSelect, onError, isProcessing = false
   return (
     <div className="w-full">
       <div className="mb-4">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+        <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--foreground)' }}>
           Upload 3D Model (glTF)
         </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm" style={{ color: '#9ca3af' }}>
           Upload a glTF (.gltf or .glb) file to visualize with audio-responsive animations
         </p>
       </div>
@@ -63,15 +63,25 @@ export default function GLTFUpload({ onFileSelect, onError, isProcessing = false
       <div
         className={`
           relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
-          ${isDragging
-            ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
-          }
           ${isProcessing ? 'opacity-50 pointer-events-none' : ''}
         `}
+        style={{
+          borderColor: isDragging ? 'var(--primary)' : 'var(--border)',
+          backgroundColor: isDragging ? 'rgba(107, 127, 57, 0.1)' : 'transparent'
+        }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        onMouseEnter={(e) => {
+          if (!isDragging && !isProcessing) {
+            e.currentTarget.style.borderColor = 'var(--primary-light)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isDragging && !isProcessing) {
+            e.currentTarget.style.borderColor = 'var(--border)';
+          }
+        }}
       >
         <input
           type="file"
@@ -84,22 +94,22 @@ export default function GLTFUpload({ onFileSelect, onError, isProcessing = false
         <div className="space-y-4">
           {isProcessing ? (
             <div className="flex items-center justify-center space-x-2">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="text-gray-600 dark:text-gray-400">Processing...</span>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: 'var(--primary)' }}></div>
+              <span style={{ color: '#9ca3af' }}>Processing...</span>
             </div>
           ) : (
             <>
-              <div className="mx-auto w-12 h-12 text-gray-400">
+              <div className="mx-auto w-12 h-12" style={{ color: 'var(--muted)' }}>
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
               
               <div>
-                <p className="text-gray-900 dark:text-gray-100 font-medium">
+                <p className="font-medium" style={{ color: 'var(--foreground)' }}>
                   {isDragging ? 'Drop your glTF file here' : 'Drop a glTF file here, or click to browse'}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
                   Supports .gltf and .glb files up to 100MB
                 </p>
               </div>
@@ -108,7 +118,7 @@ export default function GLTFUpload({ onFileSelect, onError, isProcessing = false
         </div>
       </div>
 
-      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+      <div className="mt-4 text-xs" style={{ color: '#9ca3af' }}>
         <p className="mb-1">
           <strong>Supported formats:</strong> glTF (.gltf), Binary glTF (.glb)
         </p>
