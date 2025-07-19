@@ -251,14 +251,16 @@ export class AudioUtils {
     let bpmData: { bpm: number; beatIntensity: number };
     
     if (specifiedBpm && specifiedBpm > 0) {
-      // Use specified BPM from playlist, but still calculate beat intensity from audio
-      const detectedBpmData = this.detectBPM(frequencyData, lowFrequencyAverage);
+      // Use specified BPM from playlist and calculate beat intensity directly
+      // without running the full BPM detection algorithm
+      const beatIntensity = this.calculateSimpleBeatIntensity(frequencyData, lowFrequencyAverage);
+      
       bpmData = {
         bpm: specifiedBpm,
-        beatIntensity: detectedBpmData.beatIntensity
+        beatIntensity: beatIntensity
       };
     } else {
-      // Use detected BPM
+      // Only use detected BPM for uploaded files or microphone input
       bpmData = this.detectBPM(frequencyData, lowFrequencyAverage);
     }
     
@@ -273,6 +275,37 @@ export class AudioUtils {
       isPlaying,
       specifiedBpm
     };
+  }
+  
+  /**
+   * Calculates a simple beat intensity directly from audio data
+   * Used for playlist tracks with specified BPM to avoid running the full BPM detection
+   */
+  private static calculateSimpleBeatIntensity(frequencyData: Uint8Array, lowFrequencyAverage: number): number {
+    // Calculate beat intensity based on low frequency energy and its rate of change
+    // This is a simplified approach that doesn't require BPM detection
+    
+    // Use low frequency average as a base for beat intensity
+    // Low frequencies (bass) are good indicators of beats
+    let beatIntensity = Math.min(lowFrequencyAverage * 2.5, 1.0);
+    
+    // Calculate the average energy in the kick drum frequency range (approximately 50-100Hz)
+    // This range typically contains the most energy during beats
+    const kickStart = Math.floor(frequencyData.length * 0.02); // ~50Hz
+    const kickEnd = Math.floor(frequencyData.length * 0.05);   // ~100Hz
+    
+    let kickEnergy = 0;
+    for (let i = kickStart; i < kickEnd; i++) {
+      kickEnergy += frequencyData[i] / 255.0;
+    }
+    kickEnergy /= (kickEnd - kickStart);
+    
+    // Boost beat intensity if there's significant kick drum energy
+    if (kickEnergy > 0.6) {
+      beatIntensity = Math.min(beatIntensity * 1.5, 1.0);
+    }
+    
+    return beatIntensity;
   }
 
   /**
