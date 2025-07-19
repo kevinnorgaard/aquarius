@@ -240,6 +240,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
       setInputType('microphone');
       setIsRecording(true);
+      // Fix: Set isPlaying to true for microphone input to enable 3D visualization
+      setIsPlaying(true);
       updateVisualizationData();
     } catch (error) {
       handleError(error instanceof Error ? error.message : 'Failed to start microphone input');
@@ -248,6 +250,8 @@ export default function AudioInputSelector({ onAudioData, onStateChange }: Audio
 
   const handleMicrophoneStop = useCallback(() => {
     setIsRecording(false);
+    // Fix: Set isPlaying to false when microphone stops
+    setIsPlaying(false);
     cleanup();
   }, [cleanup]);
 
