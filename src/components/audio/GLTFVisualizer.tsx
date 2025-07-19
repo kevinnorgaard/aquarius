@@ -10,9 +10,11 @@ import * as THREE from 'three';
 interface AnimatedModelProps {
   gltfFile: GLTFFile;
   audioData: AudioVisualizationData | null;
+  freqThreshold: number;
+  lowFreqIntensity: number;
 }
 
-function AnimatedModel({ gltfFile, audioData }: AnimatedModelProps) {
+function AnimatedModel({ gltfFile, audioData, freqThreshold, lowFreqIntensity }: AnimatedModelProps) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, gltfFile.url);
   
@@ -30,14 +32,16 @@ function AnimatedModel({ gltfFile, audioData }: AnimatedModelProps) {
     return allMeshes;
   }, [scene]);
 
-  // Split meshes for low and high frequency animation
+  // Split meshes for low and high frequency animation based on freqThreshold
   const lowFreqMeshes = useMemo(() => {
-    return meshes.filter((_, index) => index < Math.ceil(meshes.length / 2));
-  }, [meshes]);
+    const threshold = Math.floor(meshes.length * freqThreshold);
+    return meshes.filter((_, index) => index < threshold);
+  }, [meshes, freqThreshold]);
 
   const highFreqMeshes = useMemo(() => {
-    return meshes.filter((_, index) => index >= Math.ceil(meshes.length / 2));
-  }, [meshes]);
+    const threshold = Math.floor(meshes.length * freqThreshold);
+    return meshes.filter((_, index) => index >= threshold);
+  }, [meshes, freqThreshold]);
 
   useFrame(() => {
     if (!audioData || !groupRef.current) return;
@@ -53,12 +57,12 @@ function AnimatedModel({ gltfFile, audioData }: AnimatedModelProps) {
       const intensity = lowFrequencyAverage * 2; // Amplify the effect
       const offset = index * 0.1; // Stagger the animation
       
-      // Scale animation (keep this)
-      const scale = 1 + intensity * 0.3;
+      // Scale animation with user-controlled intensity
+      const scale = 1 + intensity * lowFreqIntensity;
       mesh.scale.setScalar(scale);
       
-      // Remove rotation, keep position animation
-      mesh.position.y = Math.sin(Date.now() * 0.001 + offset) * intensity * 0.2;
+      // Position animation with user-controlled intensity
+      mesh.position.y = Math.sin(Date.now() * 0.001 + offset) * intensity * lowFreqIntensity;
     });
 
     // Animate high frequency meshes (treble response) - removed rapid rotation
@@ -104,6 +108,9 @@ interface GLTFVisualizerProps {
 }
 
 export default function GLTFVisualizer({ gltfFile, audioData, width = 800, height = 400 }: GLTFVisualizerProps) {
+  // Add state for frequency threshold and low frequency intensity
+  const [freqThreshold, setFreqThreshold] = React.useState(0.33); // Default: 33% (1/3 of frequency range)
+  const [lowFreqIntensity, setLowFreqIntensity] = React.useState(0.3); // Default: 0.3 (30% intensity)
   if (!gltfFile) {
     return (
       <div className="w-full">
@@ -150,39 +157,85 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
           </p>
         </div>
         
-        <div 
-          className="relative border border-gray-600 rounded overflow-hidden"
-          style={{ width: '100%', height: `${height}px`, maxWidth: `${width}px` }}
-        >
-          <Canvas
-            camera={{ position: [0, 0, 5], fov: 50 }}
-            style={{ width: '100%', height: '100%' }}
+        <div className="flex gap-4">
+          <div 
+            className="relative border border-gray-600 rounded overflow-hidden flex-grow"
+            style={{ height: `${height}px` }}
           >
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} intensity={1} />
-            <pointLight position={[-10, -10, -10]} intensity={0.5} />
-            <directionalLight position={[5, 5, 5]} intensity={0.3} />
+            <Canvas
+              camera={{ position: [0, 0, 5], fov: 50 }}
+              style={{ width: '100%', height: '100%' }}
+            >
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} intensity={1} />
+              <pointLight position={[-10, -10, -10]} intensity={0.5} />
+              <directionalLight position={[5, 5, 5]} intensity={0.3} />
+              
+              <AnimatedModel 
+                gltfFile={gltfFile} 
+                audioData={audioData} 
+                freqThreshold={freqThreshold}
+                lowFreqIntensity={lowFreqIntensity}
+              />
+              
+              <OrbitControls 
+                enablePan={true}
+                enableZoom={true}
+                enableRotate={true}
+                autoRotate={!audioData} // Auto-rotate when no audio
+                autoRotateSpeed={0.5}
+              />
+            </Canvas>
             
-            <AnimatedModel gltfFile={gltfFile} audioData={audioData} />
-            
-            <OrbitControls 
-              enablePan={true}
-              enableZoom={true}
-              enableRotate={true}
-              autoRotate={!audioData} // Auto-rotate when no audio
-              autoRotateSpeed={0.5}
-            />
-          </Canvas>
+            {audioData && (
+              <div className="absolute top-2 right-2 text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">
+                <div>BPM: {Math.round(audioData.bpm)}{audioData.isBpmSpecified ? ' (Specified)' : ' (Detected)'}</div>
+                <div>Beat: {Math.round(audioData.beatIntensity * 100)}%</div>
+                <div>Low Freq: {Math.round(audioData.lowFrequencyAverage * 100)}%</div>
+                <div>High Freq: {Math.round(audioData.highFrequencyAverage * 100)}%</div>
+                <div>Playing: {audioData.isPlaying ? 'Yes' : 'No'}</div>
+              </div>
+            )}
+          </div>
           
-          {audioData && (
-            <div className="absolute top-2 right-2 text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">
-              <div>BPM: {Math.round(audioData.bpm)}{audioData.isBpmSpecified ? ' (Specified)' : ' (Detected)'}</div>
-              <div>Beat: {Math.round(audioData.beatIntensity * 100)}%</div>
-              <div>Low Freq: {Math.round(audioData.lowFrequencyAverage * 100)}%</div>
-              <div>High Freq: {Math.round(audioData.highFrequencyAverage * 100)}%</div>
-              <div>Playing: {audioData.isPlaying ? 'Yes' : 'No'}</div>
+          {/* Controls panel */}
+          <div className="w-48 bg-gray-800 rounded p-3 border border-gray-700 flex flex-col gap-4">
+            <div>
+              <label className="block text-xs text-gray-300 mb-1">Frequency Threshold</label>
+              <input 
+                type="range" 
+                min="0.1" 
+                max="0.9" 
+                step="0.05" 
+                value={freqThreshold} 
+                onChange={(e) => setFreqThreshold(parseFloat(e.target.value))}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>Low</span>
+                <span>{Math.round(freqThreshold * 100)}%</span>
+                <span>High</span>
+              </div>
             </div>
-          )}
+            
+            <div>
+              <label className="block text-xs text-gray-300 mb-1">Low Frequency Intensity</label>
+              <input 
+                type="range" 
+                min="0.1" 
+                max="1.0" 
+                step="0.05" 
+                value={lowFreqIntensity} 
+                onChange={(e) => setLowFreqIntensity(parseFloat(e.target.value))}
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
+                <span>Subtle</span>
+                <span>{Math.round(lowFreqIntensity * 100)}%</span>
+                <span>Strong</span>
+              </div>
+            </div>
+          </div>
         </div>
         
         <div className="mt-2 text-xs text-gray-400">
