@@ -127,21 +127,38 @@ function AnimatedModel({ gltfFile, audioData, freqThreshold, pulseIntensity }: A
   useFrame(() => {
     if (!audioData || !groupRef.current) return;
 
-    const { bpm, beatIntensity, isPlaying } = audioData;
+    const { frequencyData, bpm, beatIntensity, isPlaying } = audioData;
     
     // Only apply animation if audio is playing
     if (!isPlaying) return;
     
-    // Calculate beat timing
+    // Calculate custom low frequency average based on the threshold slider
+    const thresholdIndex = Math.floor(frequencyData.length * freqThreshold);
+    let lowFreqSum = 0;
+    for (let i = 0; i < thresholdIndex; i++) {
+      lowFreqSum += frequencyData[i];
+    }
+    const customLowFreqAverage = thresholdIndex > 0 ? 
+      lowFreqSum / thresholdIndex / 255 : 0; // Normalize to 0-1
+    
+    // Animate low frequency meshes (bass response)
+    lowFreqMeshes.forEach((mesh) => {
+      const intensity = customLowFreqAverage * 2; // Amplify the effect
+      
+      // Scale animation with user-controlled intensity
+      const scale = 1 + intensity * pulseIntensity;
+      mesh.scale.setScalar(scale);
+    });
+    
+    // Calculate beat timing for the whole model
     const beatTime = 60 / bpm; // Time between beats in seconds
     const beatPhase = (Date.now() / 1000) % beatTime; // Current position in beat cycle
     const beatProgress = beatPhase / beatTime; // 0-1 progress through current beat
     
     // Create a subtle pulsing effect synchronized with the beat
-    // Using sine wave for smooth transitions
-    const pulseScale = 1 + Math.sin(beatProgress * Math.PI * 2) * 0.1 * beatIntensity * pulseIntensity;
+    const pulseScale = 1 + Math.sin(beatProgress * Math.PI * 2) * 0.05 * beatIntensity * pulseIntensity;
     
-    // Apply subtle scaling to the entire model
+    // Apply subtle scaling to the entire model based on the beat
     groupRef.current.scale.setScalar(pulseScale);
   });
 
