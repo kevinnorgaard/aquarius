@@ -92,10 +92,10 @@ interface AnimatedModelProps {
   gltfFile: GLTFFile;
   audioData: AudioVisualizationData | null;
   freqThreshold: number;
-  lowFreqIntensity: number;
+  pulseIntensity: number;
 }
 
-function AnimatedModel({ gltfFile, audioData, freqThreshold, lowFreqIntensity }: AnimatedModelProps) {
+function AnimatedModel({ gltfFile, audioData, freqThreshold, pulseIntensity }: AnimatedModelProps) {
   const groupRef = useRef<THREE.Group>(null);
   const gltf = useLoader(GLTFLoader, gltfFile.url);
   
@@ -127,51 +127,22 @@ function AnimatedModel({ gltfFile, audioData, freqThreshold, lowFreqIntensity }:
   useFrame(() => {
     if (!audioData || !groupRef.current) return;
 
-    const { lowFrequencyAverage, highFrequencyAverage, bpm, beatIntensity, isPlaying } = audioData;
+    const { bpm, beatIntensity, isPlaying } = audioData;
     
-    // For microphone input, we want smoother transitions rather than abrupt stops
-    // We'll scale the animation intensity based on audio levels instead of stopping completely
-    const animationScale = isPlaying ? 1.0 : 0.1; // Reduce animation intensity when not "playing" but don't stop completely
-
-    // Animate low frequency meshes (bass response) - removed rotation
-    lowFreqMeshes.forEach((mesh, index) => {
-      const intensity = lowFrequencyAverage * 2; // Amplify the effect
-      const offset = index * 0.1; // Stagger the animation
-      
-      // Scale animation with user-controlled intensity
-      const scale = 1 + intensity * lowFreqIntensity;
-      mesh.scale.setScalar(scale);
-      
-      // Position animation with user-controlled intensity
-      mesh.position.y = Math.sin(Date.now() * 0.001 + offset) * intensity * lowFreqIntensity;
-    });
-
-    // Animate high frequency meshes (treble response) - removed rapid rotation
-    highFreqMeshes.forEach((mesh, index) => {
-      const intensity = highFrequencyAverage * 2; // Amplify the effect
-      const offset = index * 0.15; // Different stagger for variety
-      
-      // Position animation (more rapid movement for high frequencies)
-      mesh.position.y = Math.sin(Date.now() * 0.005 + offset) * intensity * 0.5;
-      mesh.position.z = Math.cos(Date.now() * 0.004 + offset) * intensity * 0.2;
-    });
-
-    // BPM-based left/right sliding animation for the whole model
+    // Only apply animation if audio is playing
+    if (!isPlaying) return;
+    
+    // Calculate beat timing
     const beatTime = 60 / bpm; // Time between beats in seconds
     const beatPhase = (Date.now() / 1000) % beatTime; // Current position in beat cycle
     const beatProgress = beatPhase / beatTime; // 0-1 progress through current beat
     
-    // Create a smooth sliding motion synchronized with the beat
-    const slideX = Math.sin(beatProgress * Math.PI * 2) * 0.5 * (1 + beatIntensity);
-    groupRef.current.position.x = slideX;
+    // Create a subtle pulsing effect synchronized with the beat
+    // Using sine wave for smooth transitions
+    const pulseScale = 1 + Math.sin(beatProgress * Math.PI * 2) * 0.1 * beatIntensity * pulseIntensity;
     
-    // Add subtle vertical bounce on beat
-    const bounceY = beatIntensity * Math.sin(beatProgress * Math.PI * 4) * 0.2;
-    groupRef.current.position.y = bounceY;
-    
-    // Optional: slight Z-axis movement for depth
-    const depthZ = Math.cos(beatProgress * Math.PI * 2) * 0.3 * beatIntensity;
-    groupRef.current.position.z = depthZ;
+    // Apply subtle scaling to the entire model
+    groupRef.current.scale.setScalar(pulseScale);
   });
 
   return (
@@ -189,9 +160,9 @@ interface GLTFVisualizerProps {
 }
 
 export default function GLTFVisualizer({ gltfFile, audioData, width = 800, height = 400 }: GLTFVisualizerProps) {
-  // Add state for frequency threshold and low frequency intensity
+  // Add state for frequency threshold and pulse intensity
   const [freqThreshold, setFreqThreshold] = React.useState(0.33); // Default: 33% (1/3 of frequency range)
-  const [lowFreqIntensity, setLowFreqIntensity] = React.useState(0.3); // Default: 0.3 (30% intensity)
+  const [pulseIntensity, setPulseIntensity] = React.useState(0.3); // Default: 0.3 (30% intensity)
   if (!gltfFile) {
     return (
       <div className="w-full">
@@ -256,7 +227,7 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
                 gltfFile={gltfFile} 
                 audioData={audioData} 
                 freqThreshold={freqThreshold}
-                lowFreqIntensity={lowFreqIntensity}
+                pulseIntensity={pulseIntensity}
               />
               
               <OrbitControls 
@@ -313,19 +284,19 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
             </div>
             
             <div>
-              <label className="block text-xs text-gray-300 mb-1">Low Frequency Intensity</label>
+              <label className="block text-xs text-gray-300 mb-1">Pulse Intensity</label>
               <input 
                 type="range" 
                 min="0" 
                 max="1.0" 
                 step="0.01" 
-                value={lowFreqIntensity} 
-                onChange={(e) => setLowFreqIntensity(parseFloat(e.target.value))}
+                value={pulseIntensity} 
+                onChange={(e) => setPulseIntensity(parseFloat(e.target.value))}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>0%</span>
-                <span>{Math.round(lowFreqIntensity * 100)}%</span>
+                <span>{Math.round(pulseIntensity * 100)}%</span>
                 <span>100%</span>
               </div>
             </div>
@@ -333,7 +304,7 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
         </div>
         
         <div className="mt-2 text-xs text-gray-400">
-          <p>🎵 BPM detection drives left/right sliding • Low frequencies animate scale • High frequencies animate position</p>
+          <p>🎵 Audio visualization with frequency spectrum analysis • Model pulses subtly to the beat</p>
         </div>
       </div>
     </div>
