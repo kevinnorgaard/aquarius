@@ -172,18 +172,6 @@ export default function Home() {
             </section>
           )}
 
-          {/* 2D Audio Visualization Section */}
-          {(audioData || audioState?.type) && (
-            <section className="backdrop-blur-sm rounded-2xl p-8 border" 
-                     style={{ backgroundColor: 'rgba(10, 10, 10, 0.5)', borderColor: 'var(--border)' }}>
-              <AudioVisualizer
-                audioData={audioData}
-                width={800}
-                height={200}
-              />
-            </section>
-          )}
-
           {/* Information Section */}
           <section className="text-center" style={{ color: '#d1d5db' }}>
             <h2 className="text-2xl font-semibold mb-4" style={{ color: 'var(--foreground)' }}>
