@@ -141,13 +141,19 @@ function AnimatedModel({ gltfFile, audioData, freqThreshold, pulseIntensity }: A
     const customLowFreqAverage = thresholdIndex > 0 ? 
       lowFreqSum / thresholdIndex / 255 : 0; // Normalize to 0-1
     
-    // Animate low frequency meshes (bass response)
-    lowFreqMeshes.forEach((mesh) => {
-      const intensity = customLowFreqAverage * 2; // Amplify the effect
+    // Animate low frequency meshes (bass response) with more pronounced scaling and position
+    lowFreqMeshes.forEach((mesh, index) => {
+      const intensity = customLowFreqAverage * 5; // Amplify the effect even more
+      const offset = index * 0.1; // Stagger the animation
       
       // Scale animation with user-controlled intensity
       const scale = 1 + intensity * pulseIntensity;
       mesh.scale.setScalar(scale);
+      
+      // Add position animation for more visible effect
+      if (pulseIntensity > 0.1) { // Only apply position changes if intensity is high enough
+        mesh.position.y = Math.sin(Date.now() * 0.002 + offset) * intensity * pulseIntensity * 0.5;
+      }
     });
     
     // Calculate beat timing for the whole model
@@ -155,11 +161,16 @@ function AnimatedModel({ gltfFile, audioData, freqThreshold, pulseIntensity }: A
     const beatPhase = (Date.now() / 1000) % beatTime; // Current position in beat cycle
     const beatProgress = beatPhase / beatTime; // 0-1 progress through current beat
     
-    // Create a subtle pulsing effect synchronized with the beat
-    const pulseScale = 1 + Math.sin(beatProgress * Math.PI * 2) * 0.05 * beatIntensity * pulseIntensity;
+    // Create a more dramatic pulsing effect synchronized with the beat
+    const pulseScale = 1 + Math.sin(beatProgress * Math.PI * 2) * 0.25 * beatIntensity * pulseIntensity;
     
-    // Apply subtle scaling to the entire model based on the beat
+    // Apply scaling to the entire model based on the beat
     groupRef.current.scale.setScalar(pulseScale);
+    
+    // Add subtle position animation to the entire model
+    if (pulseIntensity > 0.1) { // Only apply if intensity is high enough
+      groupRef.current.position.y = Math.sin(beatProgress * Math.PI * 4) * 0.1 * beatIntensity * pulseIntensity;
+    }
   });
 
   return (
