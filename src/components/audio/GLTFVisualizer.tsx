@@ -298,17 +298,17 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
               <label className="block text-xs text-gray-300 mb-1">Frequency Threshold</label>
               <input 
                 type="range" 
-                min="0.1" 
-                max="0.9" 
-                step="0.05" 
+                min="0" 
+                max="1" 
+                step="0.01" 
                 value={freqThreshold} 
                 onChange={(e) => setFreqThreshold(parseFloat(e.target.value))}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>Low</span>
-                <span>{Math.round(freqThreshold * 100)}%</span>
-                <span>High</span>
+                <span>0 Hz</span>
+                <span>{Math.round(freqThreshold * 22050)} Hz</span>
+                <span>22050 Hz</span>
               </div>
             </div>
             
@@ -316,17 +316,17 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
               <label className="block text-xs text-gray-300 mb-1">Low Frequency Intensity</label>
               <input 
                 type="range" 
-                min="0.1" 
+                min="0" 
                 max="1.0" 
-                step="0.05" 
+                step="0.01" 
                 value={lowFreqIntensity} 
                 onChange={(e) => setLowFreqIntensity(parseFloat(e.target.value))}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>Subtle</span>
+                <span>0%</span>
                 <span>{Math.round(lowFreqIntensity * 100)}%</span>
-                <span>Strong</span>
+                <span>100%</span>
               </div>
             </div>
           </div>
