@@ -1,11 +1,92 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { AudioVisualizationData, GLTFFile } from '@/types/audio';
 import * as THREE from 'three';
+
+// Custom oscillator component that shows frequency threshold
+function FrequencyVisualizer({ 
+  audioData, 
+  freqThreshold, 
+  width = 200, 
+  height = 100 
+}: { 
+  audioData: AudioVisualizationData | null; 
+  freqThreshold: number;
+  width?: number;
+  height?: number;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !audioData) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const { frequencyData } = audioData;
+    
+    // Clear canvas
+    ctx.fillStyle = 'rgb(31, 41, 55)'; // gray-800
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw frequency bars
+    const barWidth = width / frequencyData.length;
+    
+    for (let i = 0; i < frequencyData.length; i++) {
+      const barHeight = (frequencyData[i] / 255) * height * 0.8;
+      
+      // Create gradient based on frequency
+      const gradient = ctx.createLinearGradient(0, height, 0, height - barHeight);
+      if (i < frequencyData.length / 3) {
+        // Low frequencies - red to orange
+        gradient.addColorStop(0, 'rgb(239, 68, 68)'); // red-500
+        gradient.addColorStop(1, 'rgb(251, 146, 60)'); // orange-400
+      } else if (i < (frequencyData.length * 2) / 3) {
+        // Mid frequencies - orange to yellow
+        gradient.addColorStop(0, 'rgb(251, 146, 60)'); // orange-400
+        gradient.addColorStop(1, 'rgb(250, 204, 21)'); // yellow-400
+      } else {
+        // High frequencies - yellow to green
+        gradient.addColorStop(0, 'rgb(250, 204, 21)'); // yellow-400
+        gradient.addColorStop(1, 'rgb(34, 197, 94)'); // green-500
+      }
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(i * barWidth, height - barHeight, barWidth - 1, barHeight);
+    }
+    
+    // Draw threshold line
+    const thresholdX = width * freqThreshold;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(thresholdX, 0);
+    ctx.lineTo(thresholdX, height);
+    ctx.stroke();
+    
+    // Add labels
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('Low', thresholdX / 2, 12);
+    ctx.fillText('High', thresholdX + (width - thresholdX) / 2, 12);
+    
+  }, [audioData, freqThreshold, width, height]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={width}
+      height={height}
+      className="w-full h-auto border border-gray-600 rounded"
+    />
+  );
+}
 
 interface AnimatedModelProps {
   gltfFile: GLTFFile;
@@ -199,7 +280,20 @@ export default function GLTFVisualizer({ gltfFile, audioData, width = 800, heigh
           </div>
           
           {/* Controls panel */}
-          <div className="w-48 bg-gray-800 rounded p-3 border border-gray-700 flex flex-col gap-4">
+          <div className="w-64 bg-gray-800 rounded p-3 border border-gray-700 flex flex-col gap-4">
+            {/* Frequency visualizer */}
+            {audioData && (
+              <div>
+                <label className="block text-xs text-gray-300 mb-1">Frequency Spectrum</label>
+                <FrequencyVisualizer 
+                  audioData={audioData} 
+                  freqThreshold={freqThreshold} 
+                  width={240} 
+                  height={80}
+                />
+              </div>
+            )}
+            
             <div>
               <label className="block text-xs text-gray-300 mb-1">Frequency Threshold</label>
               <input 
