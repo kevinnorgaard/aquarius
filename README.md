@@ -104,6 +104,8 @@ The static files will be generated in the `out` directory.
 
 This project is configured for automatic deployment to GitHub Pages using GitHub Actions. Any push to the `main` branch will trigger a build and deployment.
 
+![Deployment Status](https://github.com/kevinnorgaard/aquarius/actions/workflows/deployment.yml/badge.svg)
+
 ### Manual Deployment
 
 1. Build the static export: `npm run export`
